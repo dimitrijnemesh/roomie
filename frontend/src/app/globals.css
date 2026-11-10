@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mint: #3ccb98;
+  --color-ink: #12302a;
+  --color-mint-dark: #0f7a5f;
+  --color-mint-light: #8fe3c0;
+  --color-mint-tint: #e8f7f1;
+  --color-paper: #fbfdfc;
+  --color-body: #3d5a52;
+  --color-muted: #5e7a72;
+  --color-on-dark: #f2fbf7;
+  --color-on-dark-2: #bfe3d6;
+  --color-line: #cdebdf;
+  --color-warning: #b4470c;
+
+  --font-display: var(--font-unbounded), system-ui, sans-serif;
+  --font-sans: var(--font-rubik), system-ui, sans-serif;
+
+  --shadow-float: 0 12px 40px rgba(18, 48, 42, 0.1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* FAQ accordion arrow */
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details[open] .faq-arrow {
+  transform: rotate(180deg);
+}
