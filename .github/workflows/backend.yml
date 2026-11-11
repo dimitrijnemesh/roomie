@@ -14,11 +14,17 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - id: code
+        run: echo "present=$([ -f package-lock.json ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - if: steps.code.outputs.present == 'true'
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: backend/package-lock.json
-      - run: npm ci
-      - run: npx prisma generate
-      - run: npm run build
+      - if: steps.code.outputs.present == 'true'
+        run: npm ci
+      - if: steps.code.outputs.present == 'true'
+        run: npx prisma generate
+      - if: steps.code.outputs.present == 'true'
+        run: npm run build
