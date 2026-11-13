@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" rx="230" fill="#3CCB98"/>
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
+    <!-- left roommate: walking, key in hand -->
+    <circle cx="372" cy="348" r="50" fill="#FFFFFF" stroke="none"/>
+    <path d="M362 440 L356 608" stroke-width="66"/>
+    <path d="M372 450 L458 548" stroke-width="44"/>
+    <path d="M350 462 L300 592" stroke-width="44"/>
+    <path d="M356 608 L398 718 L410 800 L446 800" stroke-width="54"/>
+    <path d="M350 612 L330 690 L282 778 L300 798" stroke-width="54"/>
+    <circle cx="462" cy="584" r="20" stroke-width="14"/>
+    <path d="M463 604 L466 690 M466 662 L448 662 M466 684 L446 686" stroke-width="13"/>
+
+    <!-- right roommate: walking, key raised -->
+    <circle cx="634" cy="346" r="50" fill="#FFFFFF" stroke="none"/>
+    <path d="M624 440 L618 608" stroke-width="66"/>
+    <path d="M636 432 L716 398 L726 306" stroke-width="44"/>
+    <path d="M612 462 L564 590" stroke-width="44"/>
+    <path d="M618 608 L660 718 L672 800 L708 800" stroke-width="54"/>
+    <path d="M612 612 L592 690 L544 778 L562 798" stroke-width="54"/>
+    <circle cx="742" cy="214" r="21" stroke-width="14"/>
+    <path d="M756 198 L800 140 M786 158 L800 170 M796 145 L810 156" stroke-width="13"/>
+    <path d="M830 168 L842 172 M822 200 L842 202 M706 234 L706 236 M700 260 L700 262" stroke-width="10"/>
+  </g>
+</svg>
