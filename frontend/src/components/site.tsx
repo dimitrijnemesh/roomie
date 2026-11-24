@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SocialLinks } from "./SocialLinks";
 import { Brand, ButtonLink, Logo, Wordmark } from "./ui";
 
 export function Navbar() {
@@ -53,18 +54,10 @@ export function Footer() {
 
         <div>
           <p className="mb-3 font-display text-sm font-semibold">Ми в мережі</p>
-          <ul className="flex flex-col gap-2 text-on-dark-2">
-            <li>
-              <a href="https://x.com/roomie_ua" target="_blank" rel="noreferrer" className="hover:text-mint-light">
-                X (Twitter) — @roomie_ua
-              </a>
-            </li>
-            <li>
-              <a href="mailto:roomie.ua@gmail.com" className="hover:text-mint-light">
-                roomie.ua@gmail.com
-              </a>
-            </li>
-          </ul>
+          <SocialLinks />
+          <a href="mailto:roomie.ua@gmail.com" className="mt-4 inline-block text-on-dark-2 hover:text-mint-light">
+            roomie.ua@gmail.com
+          </a>
         </div>
       </div>
       <div className="border-t border-white/10">

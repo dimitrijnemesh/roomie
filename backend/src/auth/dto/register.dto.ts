@@ -4,7 +4,7 @@ import { IsEmail, Length, Matches } from 'class-validator';
 import { IsStudentEmail } from '../../common/validators/is-student-email';
 
 export const EMAIL_ERROR = 'Потрібна студентська пошта львівського університету';
-export const PASSWORD_ERROR = 'Мінімум 8 символів, літера і цифра';
+export const PASSWORD_ERROR = 'Мінімум 8 символів: літера, цифра і спецсимвол';
 export const NAME_ERROR = 'Ім’я — від 2 до 40 літер';
 
 export const normalizeEmail = ({ value }: { value: unknown }) =>
@@ -18,9 +18,9 @@ export class RegisterDto {
   @IsStudentEmail({ message: EMAIL_ERROR })
   email: string;
 
-  @ApiProperty({ example: 'roomie2026', minLength: 8, maxLength: 72, description: 'Мінімум 8 символів, літера і цифра' })
+  @ApiProperty({ example: 'roomie2026!', minLength: 8, maxLength: 72, description: 'Мінімум 8 символів: літера, цифра і спецсимвол' })
   @Length(8, 72, { message: PASSWORD_ERROR })
-  @Matches(/^(?=.*\p{L})(?=.*\d).+$/u, { message: PASSWORD_ERROR })
+  @Matches(/^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d\s]).+$/u, { message: PASSWORD_ERROR })
   password: string;
 
   @ApiProperty({ example: 'Іван', minLength: 2, maxLength: 40 })

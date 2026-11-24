@@ -1,7 +1,9 @@
+import { GuestOnly } from "@/components/GuestOnly";
 import { Brand } from "@/components/ui";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
+    <GuestOnly>
     <div className="flex min-h-dvh flex-col bg-mint-tint/60">
       <header className="mx-auto flex h-[60px] w-full max-w-6xl items-center px-4 sm:h-[72px] sm:px-6">
         <Brand size={36} />
@@ -11,5 +13,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </main>
       <p className="pb-6 text-center text-sm text-muted">Тільки для студентів вишів Львова</p>
     </div>
+    </GuestOnly>
   );
 }

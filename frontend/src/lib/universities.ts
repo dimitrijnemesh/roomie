@@ -9,3 +9,8 @@ export const UNIVERSITIES = [
 ] as const;
 
 export const EMAIL_PLACEHOLDER = "ivan.petrenko@lnu.edu.ua";
+
+export function isStudentEmail(email: string) {
+  const domain = email.split("@")[1]?.toLowerCase();
+  return UNIVERSITIES.some((u) => u.domain === domain);
+}

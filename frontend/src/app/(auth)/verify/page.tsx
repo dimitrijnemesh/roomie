@@ -13,7 +13,6 @@ export default function VerifyPage() {
         </svg>
       </div>
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Підтвердь пошту</h1>
-      <p className="mt-2 text-body">Ми надіслали 6-значний код на твою університетську пошту. Він діє 10 хвилин.</p>
       <VerifyForm />
     </>
   );
