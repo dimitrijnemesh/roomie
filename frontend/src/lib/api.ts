@@ -51,3 +51,77 @@ export const authApi = {
   login: (body: { email: string; password: string }) => request<AuthResult>("/auth/login", { method: "POST", body }),
   me: () => request<User>("/auth/me", { auth: true }),
 };
+
+// ---------- Profile / onboarding ----------
+
+export type Gender = "male" | "female";
+export type Habits = {
+  sleep?: "early" | "late" | "flexible";
+  clean?: number;
+  smoking?: boolean;
+  guests?: "never" | "rarely" | "often";
+};
+export type Looking = {
+  roommateGender?: "male" | "female" | "any";
+  housing?: "dorm" | "flat" | "any";
+  budget?: [number, number];
+  district?: string;
+};
+export type Photo = { id: string; url: string };
+export type Profile = {
+  id: string;
+  name: string;
+  university: string;
+  gender: Gender | null;
+  /** Own profile only, YYYY-MM-DD */
+  birthDate?: string | null;
+  /** Calculated from the date of birth */
+  age: number | null;
+  degree: "bachelor" | "master" | "phd" | null;
+  faculty: string | null;
+  specialty: string | null;
+  specialization: string | null;
+  course: number | null;
+  bio: string | null;
+  habits: Habits | null;
+  looking: Looking | null;
+  photos: Photo[];
+  onboarded: boolean;
+};
+export type ProfileUpdate = Partial<Pick<Profile, "faculty" | "specialty" | "specialization" | "course" | "bio">> & {
+  birthDate?: string;
+  degree?: "bachelor" | "master" | "phd";
+  gender?: Gender;
+  habits?: Habits;
+  looking?: Looking;
+};
+
+async function upload<T>(path: string, field: string, file: Blob, filename: string): Promise<T> {
+  const body = new FormData();
+  body.append(field, file, filename);
+  const token = getToken();
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body,
+    });
+  } catch {
+    throw new ApiError(0, "NETWORK", "Немає зв’язку із сервером. Перевір інтернет і спробуй ще раз");
+  }
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const e = data?.error;
+    throw new ApiError(res.status, e?.code ?? "ERROR", e?.message ?? "Не вдалося завантажити фото", e?.field);
+  }
+  return data as T;
+}
+
+export const profileApi = {
+  get: () => request<Profile>("/profile/me", { auth: true }),
+  update: (body: ProfileUpdate) => request<Profile>("/profile/me", { method: "PUT", body, auth: true }),
+  addPhoto: (file: Blob) => upload<Photo[]>("/profile/me/photos", "photo", file, "photo.jpg"),
+  deletePhoto: (id: string) => request<Photo[]>(`/profile/me/photos/${encodeURIComponent(id)}`, { method: "DELETE", auth: true }),
+  reorderPhotos: (ids: string[]) => request<Photo[]>("/profile/me/photos/order", { method: "PUT", body: { ids }, auth: true }),
+};

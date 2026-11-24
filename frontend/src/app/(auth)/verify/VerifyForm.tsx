@@ -100,7 +100,7 @@ export function VerifyForm() {
         setSuccess(true);
         await wait(1500);
         setToken(accessToken); // after the animation — saving the token sends guest pages to /app
-        router.push("/app");
+        router.push("/onboarding"); // a new account always fills the profile first
       } catch (err) {
         setLoading(false);
         const e = err instanceof ApiError ? err : null;
