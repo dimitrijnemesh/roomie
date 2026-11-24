@@ -16,6 +16,7 @@ model User {
   onboarded    Boolean  @default(false)
   createdAt    DateTime @default(now())
   profile      Profile?
+  photos       Photo[]
 
   @@map("users")
 }
@@ -24,8 +25,15 @@ model Profile {
   userId     String   @id
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   university String
-  age        Int?
-  institute  String?
+  gender     String?
+  /// Age is calculated from this, so it updates every year
+  birthDate  DateTime? @db.Date
+  /// bachelor | master | phd
+  degree         String?
+  faculty        String?
+  specialty      String?
+  /// Освітня програма; from the list or typed by the user
+  specialization String?
   course     Int?
   bio        String?
   habits     Json?
@@ -33,6 +41,19 @@ model Profile {
   updatedAt  DateTime @updatedAt
 
   @@map("profiles")
+}
+
+model Photo {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// File name inside UPLOAD_DIR (random, never user-provided)
+  file      String   @unique
+  position  Int
+  createdAt DateTime @default(now())
+
+  @@index([userId, position])
+  @@map("photos")
 }
 
 model EmailCode {
