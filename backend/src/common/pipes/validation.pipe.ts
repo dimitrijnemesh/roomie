@@ -19,6 +19,7 @@ export const validationPipe = new ValidationPipe({
   exceptionFactory: (errors) => {
     const first = errors[0] && firstLeaf(errors[0]);
     const message = Object.values(first?.constraints ?? {})[0] ?? 'Невірні дані';
-    return new ApiException(400, CODE_BY_FIELD[errors[0]?.property] ?? 'VALIDATION_ERROR', message);
+    const field = errors[0]?.property;
+    return new ApiException(400, CODE_BY_FIELD[field] ?? 'VALIDATION_ERROR', message, field);
   },
 });

@@ -5,7 +5,8 @@ export class ApiException extends HttpException {
     status: number,
     public readonly code: string,
     message: string,
+    field?: string,
   ) {
-    super({ error: { code, message } }, status);
+    super({ error: field ? { code, message, field } : { code, message } }, status);
   }
 }

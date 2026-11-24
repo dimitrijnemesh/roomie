@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { User } from '@prisma/client';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -16,6 +17,7 @@ export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('register')
   @ApiOperation({ summary: 'Реєстрація', description: 'Створює користувача і надсилає 6-значний код на пошту.' })
   @ApiResponse({ status: 201, type: SentDto })
@@ -26,6 +28,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('verify-email')
   @HttpCode(200)
   @ApiOperation({ summary: 'Підтвердження пошти', description: 'Перевіряє код і повертає JWT.' })
@@ -37,6 +40,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('resend-code')
   @HttpCode(200)
   @ApiOperation({ summary: 'Надіслати код ще раз', description: 'Не частіше ніж раз на 60 секунд.' })
@@ -49,11 +53,12 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('login')
   @HttpCode(200)
   @ApiOperation({ summary: 'Вхід' })
   @ApiResponse({ status: 200, type: AuthResultDto })
-  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'INVALID_CREDENTIALS' })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'INVALID_CREDENTIALS — невірна пошта або пароль (одне повідомлення для обох)' })
   @ApiResponse({ status: 403, type: ApiErrorDto, description: 'EMAIL_NOT_VERIFIED — фронт веде на /verify' })
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto);

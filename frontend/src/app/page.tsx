@@ -1,3 +1,4 @@
+import { GuestOnly } from "@/components/GuestOnly";
 import { Footer, Navbar } from "@/components/site";
 import { UniversityList } from "@/components/UniversityList";
 import { ButtonLink, Eyebrow, Logo } from "@/components/ui";
@@ -49,7 +50,7 @@ const faq: { q: string; a: ReactNode }[] = [
 
 export default function Home() {
   return (
-    <>
+    <GuestOnly>
       <Navbar />
       <main className="flex-1">
         {/* Hero */}
@@ -175,6 +176,6 @@ export default function Home() {
         </section>
       </main>
       <Footer />
-    </>
+    </GuestOnly>
   );
 }

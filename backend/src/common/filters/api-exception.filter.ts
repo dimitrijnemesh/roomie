@@ -24,7 +24,15 @@ export class ApiExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const code = HttpStatus[status] ?? 'ERROR';
-      return res.status(status).json({ error: { code, message: MESSAGES[status] ?? exception.message } });
+      // Never echo internal/parser messages (e.g. JSON syntax errors) to the client.
+      const message = MESSAGES[status] ?? (status === 400 ? 'Невірний формат запиту' : 'Щось пішло не так, спробуй ще раз');
+      return res.status(status).json({ error: { code, message } });
+    }
+
+    // body-parser errors are not HttpExceptions: too large → 413, broken JSON → 400.
+    const bodyError = exception as { type?: string; status?: number };
+    if (bodyError?.type === 'entity.too.large') {
+      return res.status(413).json({ error: { code: 'PAYLOAD_TOO_LARGE', message: 'Забагато даних у запиті' } });
     }
 
     this.logger.error(exception);

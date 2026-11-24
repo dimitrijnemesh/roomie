@@ -15,6 +15,7 @@ const CODE_TTL_MS = 10 * 60 * 1000;
 const CODE_MAX_ATTEMPTS = 5;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const BCRYPT_ROUNDS = 10;
+const DUMMY_HASH = bcrypt.hashSync('roomie-timing-dummy', BCRYPT_ROUNDS);
 
 @Injectable()
 export class AuthService {
@@ -30,6 +31,10 @@ export class AuthService {
       throw new ApiException(409, 'EMAIL_TAKEN', 'Ця пошта вже зареєстрована — спробуй увійти');
     }
 
+    // Re-registering an unconfirmed email re-sends the code — same 60 s cooldown as resend-code,
+    // otherwise anyone could flood someone's inbox.
+    if (existing) await this.assertResendAllowed(existing.email);
+
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
     const user = existing
       ? await this.prisma.user.update({ where: { id: existing.id }, data: { passwordHash, name: dto.name } })
@@ -41,7 +46,7 @@ export class AuthService {
 
   async verifyEmail(dto: VerifyEmailDto): Promise<AuthResultDto> {
     const record = await this.prisma.emailCode.findUnique({ where: { email: dto.email } });
-    if (!record) throw new ApiException(400, 'CODE_INVALID', 'Невірний код');
+    if (!record) throw new ApiException(400, 'CODE_INVALID', 'Код неправильний — перевір і спробуй ще раз');
     if (record.expiresAt < new Date()) throw new ApiException(400, 'CODE_EXPIRED', 'Код прострочений — надішли новий');
     if (record.attempts >= CODE_MAX_ATTEMPTS) {
       throw new ApiException(429, 'TOO_MANY_ATTEMPTS', 'Забагато спроб — надішли новий код');
@@ -50,7 +55,7 @@ export class AuthService {
     const ok = await bcrypt.compare(dto.code, record.codeHash);
     if (!ok) {
       await this.prisma.emailCode.update({ where: { email: dto.email }, data: { attempts: { increment: 1 } } });
-      throw new ApiException(400, 'CODE_INVALID', 'Невірний код');
+      throw new ApiException(400, 'CODE_INVALID', 'Код неправильний — перевір і спробуй ще раз');
     }
 
     const [user] = await this.prisma.$transaction([
@@ -66,22 +71,27 @@ export class AuthService {
     if (!user) throw new ApiException(404, 'USER_NOT_FOUND', 'Такої пошти немає — зареєструйся');
     if (user.verified) throw new ApiException(400, 'ALREADY_VERIFIED', 'Пошта вже підтверджена — увійди');
 
-    const last = await this.prisma.emailCode.findUnique({ where: { email } });
-    if (last && Date.now() - last.createdAt.getTime() < RESEND_COOLDOWN_MS) {
-      throw new ApiException(429, 'RESEND_TOO_SOON', 'Зачекай хвилину перед повторною відправкою');
-    }
-
+    await this.assertResendAllowed(email);
     await this.issueCode(user);
     return { sent: true };
   }
 
   async login(dto: LoginDto): Promise<AuthResultDto> {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    const ok = user && (await bcrypt.compare(dto.password, user.passwordHash));
-    if (!ok) throw new ApiException(401, 'INVALID_CREDENTIALS', 'Невірна пошта або пароль');
+    // One answer for "no such account" and "wrong password", and a bcrypt check in both cases,
+    // so neither the message nor the response time tells whether an email is registered.
+    const ok = await bcrypt.compare(dto.password, user?.passwordHash ?? DUMMY_HASH);
+    if (!user || !ok) throw new ApiException(401, 'INVALID_CREDENTIALS', 'Невірна пошта або пароль');
     if (!user.verified) throw new ApiException(403, 'EMAIL_NOT_VERIFIED', 'Спочатку підтверди пошту');
 
     return this.authResult(user);
+  }
+
+  private async assertResendAllowed(email: string) {
+    const last = await this.prisma.emailCode.findUnique({ where: { email } });
+    if (last && Date.now() - last.createdAt.getTime() < RESEND_COOLDOWN_MS) {
+      throw new ApiException(429, 'RESEND_TOO_SOON', 'Зачекай хвилину перед повторною відправкою');
+    }
   }
 
   toUserDto(user: User): UserDto {
