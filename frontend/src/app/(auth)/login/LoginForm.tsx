@@ -51,7 +51,7 @@ export function LoginForm() {
       setWelcome(user.name);
       await wait(1300);
       setToken(accessToken); // after the animation — saving the token sends guest pages to /app
-      router.push("/app");
+      router.push(user.onboarded ? "/app" : "/onboarding");
     } catch (err) {
       setLoading(false);
       if (!(err instanceof ApiError)) return setStatus({ kind: "error", message: "Щось пішло не так, спробуй ще раз" });
