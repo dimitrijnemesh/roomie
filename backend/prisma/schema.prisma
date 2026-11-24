@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  verified     Boolean  @default(false)
+  onboarded    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  profile      Profile?
+
+  @@map("users")
+}
+
+model Profile {
+  userId     String   @id
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university String
+  age        Int?
+  institute  String?
+  course     Int?
+  bio        String?
+  habits     Json?
+  looking    Json?
+  updatedAt  DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model EmailCode {
+  email     String   @id
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("email_codes")
+}
