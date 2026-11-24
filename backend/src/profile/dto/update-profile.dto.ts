@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { DEGREES, type Degree } from '../../config/academics';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -8,6 +9,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Matches,
   Length,
   Max,
   Min,
@@ -17,6 +19,8 @@ import {
 export const SLEEP = ['early', 'late', 'flexible'] as const;
 export const GUESTS = ['never', 'rarely', 'often'] as const;
 export const HOUSING = ['dorm', 'flat', 'any'] as const;
+export const GENDER = ['male', 'female'] as const;
+export const ROOMMATE_GENDER = ['male', 'female', 'any'] as const;
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
@@ -45,12 +49,18 @@ export class HabitsDto {
 }
 
 export class LookingDto {
+  @ApiPropertyOptional({ enum: ROOMMATE_GENDER, description: 'Кого шукаєш у сусіди' })
+  @IsOptional()
+  @IsIn(ROOMMATE_GENDER, { message: 'Обери: male, female або any' })
+  roommateGender?: (typeof ROOMMATE_GENDER)[number];
+
   @ApiPropertyOptional({ example: [2000, 4000], description: 'Бюджет, грн/міс: [від, до]' })
   @IsOptional()
   @ArrayMinSize(2, { message: 'Бюджет — два числа: від і до' })
   @ArrayMaxSize(2, { message: 'Бюджет — два числа: від і до' })
   @IsInt({ each: true, message: 'Бюджет — цілі числа' })
   @Min(0, { each: true, message: 'Бюджет не може бути від’ємним' })
+  @Max(100_000, { each: true, message: 'Бюджет — до 100 000 грн' })
   budget?: [number, number];
 
   @ApiPropertyOptional({ enum: HOUSING, description: 'Тип житла' })
@@ -67,21 +77,44 @@ export class LookingDto {
 }
 
 export class UpdateProfileDto {
-  @ApiPropertyOptional({ example: 18, minimum: 16, maximum: 60 })
+  @ApiPropertyOptional({ enum: GENDER })
   @IsOptional()
-  @IsInt({ message: 'Вік — число від 16 до 60' })
-  @Min(16, { message: 'Вік — число від 16 до 60' })
-  @Max(60, { message: 'Вік — число від 16 до 60' })
-  age?: number;
+  @IsIn(GENDER, { message: 'Обери: male або female' })
+  gender?: (typeof GENDER)[number];
 
-  @ApiPropertyOptional({ example: 'ІКНІ', maxLength: 60 })
+  @ApiPropertyOptional({ example: '2007-05-14', description: 'Дата народження, YYYY-MM-DD. Вік 16–60 рахується з неї.' })
+  @IsOptional()
+  @IsString({ message: 'Вкажи дату народження' })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'Дата народження — у форматі РРРР-ММ-ДД' })
+  birthDate?: string;
+
+  @ApiPropertyOptional({ enum: DEGREES, description: 'Освітній ступінь' })
+  @IsOptional()
+  @IsIn(DEGREES, { message: 'Обери: bachelor, master або phd' })
+  degree?: Degree;
+
+  @ApiPropertyOptional({ example: 'Інститут комп’ютерних наук та інформаційних технологій', description: 'Назва зі списку твого вишу' })
   @IsOptional()
   @Transform(trim)
-  @IsString({ message: 'Інститут — текст' })
-  @Length(2, 60, { message: 'Інститут — від 2 до 60 символів' })
-  institute?: string;
+  @IsString({ message: 'Обери факультет зі списку' })
+  @Length(2, 120, { message: 'Обери факультет зі списку' })
+  faculty?: string;
 
-  @ApiPropertyOptional({ example: 1, minimum: 1, maximum: 6 })
+  @ApiPropertyOptional({ example: 'Комп’ютерні науки', description: 'Назва зі списку спеціальностей факультету' })
+  @IsOptional()
+  @Transform(trim)
+  @IsString({ message: 'Обери спеціальність зі списку' })
+  @Length(2, 120, { message: 'Обери спеціальність зі списку' })
+  specialty?: string;
+
+  @ApiPropertyOptional({ example: 'Системи штучного інтелекту', description: 'Освітня програма: зі списку або своя; порожній рядок — прибрати' })
+  @IsOptional()
+  @Transform(trim)
+  @IsString({ message: 'Спеціалізація — текст' })
+  @Length(0, 120, { message: 'Спеціалізація — до 120 символів' })
+  specialization?: string;
+
+  @ApiPropertyOptional({ example: 1, minimum: 1, maximum: 6, description: 'Бакалавр 1–4, магістр 1–2 (ЛНМУ 1–6), PhD 1–4' })
   @IsOptional()
   @IsInt({ message: 'Курс — число від 1 до 6' })
   @Min(1, { message: 'Курс — число від 1 до 6' })

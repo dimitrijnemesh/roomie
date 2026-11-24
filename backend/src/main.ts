@@ -3,6 +3,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { UPLOAD_DIR } from './profile/photos.storage';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter';
 import { validationPipe } from './common/pipes/validation.pipe';
 
@@ -10,10 +11,12 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Security headers; hide the framework. Behind Railway's proxy, trust it so rate limits see real IPs.
-  app.use(helmet());
+  // Photos are loaded by the frontend from another origin, so allow cross-origin reads of resources.
+  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.disable('x-powered-by');
   if (process.env.TRUST_PROXY) app.set('trust proxy', 1);
   app.useBodyParser('json', { limit: '100kb' });
+  app.useStaticAssets(UPLOAD_DIR, { prefix: '/uploads/', index: false, dotfiles: 'deny', maxAge: '7d' });
 
   app.enableCors({ origin: process.env.CORS_ORIGIN?.split(',') ?? true, credentials: true });
   app.useGlobalPipes(validationPipe);
