@@ -50,6 +50,11 @@ export const authApi = {
   resendCode: (email: string) => request<{ sent: true }>("/auth/resend-code", { method: "POST", body: { email } }),
   login: (body: { email: string; password: string }) => request<AuthResult>("/auth/login", { method: "POST", body }),
   me: () => request<User>("/auth/me", { auth: true }),
+  /** Always `{ sent: true }` — even for an unknown email, so nobody can check who is registered. */
+  forgotPassword: (email: string) => request<{ sent: true }>("/auth/forgot-password", { method: "POST", body: { email } }),
+  /** New password by the code from the email; returns a new token (old ones stop working). */
+  resetPassword: (body: { email: string; code: string; newPassword: string }) =>
+    request<AuthResult>("/auth/reset-password", { method: "POST", body }),
   updateMe: (body: { name: string }) => request<User>("/auth/me", { method: "PATCH", body, auth: true }),
   /** Returns a new token — the old one (and every other device) stops working. */
   changePassword: (body: { currentPassword: string; newPassword: string }) =>
