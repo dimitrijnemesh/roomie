@@ -6,6 +6,7 @@ import { randomInt } from 'crypto';
 import { ApiException } from '../common/exceptions/api.exception';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResultDto, UserDto } from './dto/responses.dto';
@@ -85,6 +86,15 @@ export class AuthService {
     if (!user.verified) throw new ApiException(403, 'EMAIL_NOT_VERIFIED', 'Спочатку підтверди пошту');
 
     return this.authResult(user);
+  }
+
+  async changePassword(user: User, dto: ChangePasswordDto): Promise<AuthResultDto> {
+    const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!ok) throw new ApiException(400, 'WRONG_PASSWORD', 'Поточний пароль неправильний', 'currentPassword');
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
+    const updated = await this.prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+    return this.authResult(updated);
   }
 
   private async assertResendAllowed(email: string) {

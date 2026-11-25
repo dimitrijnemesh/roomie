@@ -5,6 +5,7 @@ import { User } from '@prisma/client';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthService } from './auth.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResendCodeDto } from './dto/resend-code.dto';
@@ -62,6 +63,17 @@ export class AuthController {
   @ApiResponse({ status: 403, type: ApiErrorDto, description: 'EMAIL_NOT_VERIFIED — фронт веде на /verify' })
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto);
+  }
+
+  @Post('change-password')
+  @HttpCode(200)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Змінити пароль', description: 'Лише для залогінених.' })
+  @ApiResponse({ status: 200, type: AuthResultDto })
+  @ApiResponse({ status: 400, type: ApiErrorDto, description: 'WRONG_PASSWORD (field: currentPassword)' })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'UNAUTHORIZED · TOKEN_INVALID' })
+  changePassword(@CurrentUser() user: User, @Body() dto: ChangePasswordDto) {
+    return this.auth.changePassword(user, dto);
   }
 
   @Get('me')
