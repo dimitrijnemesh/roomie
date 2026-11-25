@@ -70,7 +70,11 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Змінити пароль', description: 'Лише для залогінених.' })
   @ApiResponse({ status: 200, type: AuthResultDto })
-  @ApiResponse({ status: 400, type: ApiErrorDto, description: 'WRONG_PASSWORD (field: currentPassword)' })
+  @ApiResponse({
+    status: 400,
+    type: ApiErrorDto,
+    description: 'WRONG_PASSWORD (field: currentPassword) · WEAK_PASSWORD · SAME_PASSWORD (field: newPassword)',
+  })
   @ApiResponse({ status: 401, type: ApiErrorDto, description: 'UNAUTHORIZED · TOKEN_INVALID' })
   changePassword(@CurrentUser() user: User, @Body() dto: ChangePasswordDto) {
     return this.auth.changePassword(user, dto);

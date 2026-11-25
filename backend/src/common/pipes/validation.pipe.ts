@@ -8,6 +8,7 @@ function firstLeaf(error: ValidationError): ValidationError {
 const CODE_BY_FIELD: Record<string, string> = {
   email: 'EMAIL_NOT_STUDENT',
   password: 'WEAK_PASSWORD',
+  newPassword: 'WEAK_PASSWORD',
   name: 'INVALID_NAME',
   code: 'CODE_INVALID',
 };
