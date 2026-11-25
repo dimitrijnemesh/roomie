@@ -35,7 +35,12 @@ export type StepProps = {
   onSaved: (p: Profile) => void;
   onBack?: () => void;
   last?: boolean;
+  /** Button texts when a step is reused outside onboarding (e.g. «Зберегти» / «Скасувати» on «Моя анкета»). */
+  submitLabel?: string;
+  backLabel?: string;
 };
+
+type NavLabels = Pick<StepProps, "submitLabel" | "backLabel">;
 
 type Errors = Record<string, string | undefined>;
 
@@ -47,16 +52,22 @@ function showInvalid(form: HTMLFormElement | null, errors: Errors) {
   return keys.length === 0;
 }
 
-function StepNav({ onBack, loading, last }: { onBack?: () => void; loading: boolean; last?: boolean }) {
+function StepNav({
+  onBack,
+  loading,
+  last,
+  submitLabel,
+  backLabel = "Назад",
+}: { onBack?: () => void; loading: boolean; last?: boolean } & NavLabels) {
   return (
     <div className="mt-8 flex gap-3">
       {onBack && (
         <Button type="button" variant="outline" onClick={onBack} disabled={loading} className="px-5 py-3.5">
-          Назад
+          {backLabel}
         </Button>
       )}
       <Button type="submit" loading={loading} className="flex-1 py-3.5 text-lg">
-        {loading ? "Зберігаємо…" : last ? "Готово" : "Далі"}
+        {loading ? "Зберігаємо…" : (submitLabel ?? (last ? "Готово" : "Далі"))}
       </Button>
     </div>
   );
@@ -80,7 +91,7 @@ async function save(
 
 // ---------- 1. Про мене ----------
 
-export function StepAbout({ profile, onSaved }: StepProps) {
+export function StepAbout({ profile, onSaved, onBack, ...labels }: StepProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [gender, setGender] = useState(profile.gender ?? undefined);
   const [bd, bm, by] = profile.birthDate ? profile.birthDate.split("-").reverse().map((x) => String(Number(x))) : ["", "", ""];
@@ -156,7 +167,7 @@ export function StepAbout({ profile, onSaved }: StepProps) {
         <FieldError id="bio-error">{errors.bio}</FieldError>
       </div>
 
-      <StepNav loading={loading} />
+      <StepNav onBack={onBack} loading={loading} {...labels} />
     </form>
   );
 }
@@ -253,7 +264,7 @@ function BirthDateField({
 
 // ---------- 2. Навчання ----------
 
-export function StepStudy({ profile, onSaved, onBack, universityName }: StepProps & { universityName: string }) {
+export function StepStudy({ profile, onSaved, onBack, universityName, ...labels }: StepProps & { universityName: string }) {
   const uni = profile.university;
   const formRef = useRef<HTMLFormElement>(null);
   const [degree, setDegree] = useState<Degree | undefined>((profile.degree as Degree) ?? undefined);
@@ -384,7 +395,7 @@ export function StepStudy({ profile, onSaved, onBack, universityName }: StepProp
         error={errors.specialization}
       />
 
-      <StepNav onBack={onBack} loading={loading} />
+      <StepNav onBack={onBack} loading={loading} {...labels} />
     </form>
   );
 }
@@ -393,7 +404,7 @@ export function StepStudy({ profile, onSaved, onBack, universityName }: StepProp
 
 type Slot = { kind: "photo"; photo: Photo } | { kind: "uploading"; key: string; preview: string };
 
-export function StepPhotos({ profile, onSaved, onBack }: StepProps) {
+export function StepPhotos({ profile, onSaved, onBack, ...labels }: StepProps) {
   const [photos, setPhotos] = useState<Photo[]>(profile.photos);
   const [uploading, setUploading] = useState<{ key: string; preview: string }[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -572,14 +583,14 @@ export function StepPhotos({ profile, onSaved, onBack }: StepProps) {
       </div>
       <p className="text-xs text-muted">JPG, PNG або WEBP до {MAX_PHOTO_MB} МБ. Великі фото ми стиснемо самі.</p>
 
-      <StepNav onBack={onBack} loading={uploading.length > 0} />
+      <StepNav onBack={onBack} loading={uploading.length > 0} {...labels} />
     </form>
   );
 }
 
 // ---------- 4. Звички ----------
 
-export function StepHabits({ profile, onSaved, onBack }: StepProps) {
+export function StepHabits({ profile, onSaved, onBack, ...labels }: StepProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [h, setH] = useState<Habits>(profile.habits ?? {});
   const [errors, setErrors] = useState<Errors>({});
@@ -618,14 +629,14 @@ export function StepHabits({ profile, onSaved, onBack }: StepProps) {
       <ChoiceChips id="clean" label="Чистота" options={CLEAN_OPTIONS} value={h.clean} onChange={(v) => set("clean", v)} error={errors.clean} />
       <ChoiceChips id="smoking" label="Куріння" options={SMOKING_OPTIONS} value={h.smoking} onChange={(v) => set("smoking", v)} error={errors.smoking} />
       <ChoiceChips id="guests" label="Гості" options={GUESTS_OPTIONS} value={h.guests} onChange={(v) => set("guests", v)} error={errors.guests} />
-      <StepNav onBack={onBack} loading={loading} />
+      <StepNav onBack={onBack} loading={loading} {...labels} />
     </form>
   );
 }
 
 // ---------- 5. Що шукаю ----------
 
-export function StepLooking({ profile, onSaved, onBack }: StepProps) {
+export function StepLooking({ profile, onSaved, onBack, ...labels }: StepProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const initial = profile.looking ?? {};
   const [roommate, setRoommate] = useState(initial.roommateGender);
@@ -701,7 +712,7 @@ export function StepLooking({ profile, onSaved, onBack }: StepProps) {
         onChange={(e) => (setDistrict(e.target.value), clear("district"))}
         error={errors.district}
       />
-      <StepNav onBack={onBack} loading={loading} last />
+      <StepNav onBack={onBack} loading={loading} last {...labels} />
     </form>
   );
 }
