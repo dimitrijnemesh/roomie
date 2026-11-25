@@ -44,6 +44,7 @@ const variants = {
   primary: "bg-mint text-ink hover:bg-[#35b98a]",
   secondary: "bg-ink text-white hover:bg-[#1b443b]",
   outline: "border-2 border-line bg-white text-ink hover:border-mint",
+  danger: "bg-warning text-white hover:bg-[#963a09]",
 } as const;
 
 type Variant = keyof typeof variants;
