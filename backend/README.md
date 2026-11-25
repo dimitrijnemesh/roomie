@@ -52,9 +52,14 @@ All requests and responses are JSON. Every route except auth needs the header `A
 | `POST /auth/resend-code` | `{email}` | `200 {sent:true}` | `429` if less than 60 s since the last code |
 | `POST /auth/login` | `{email, password}` | `200 {accessToken, user}` | `401 INVALID_CREDENTIALS`, `403 EMAIL_NOT_VERIFIED` |
 | `GET /auth/me` | — | `200 {id, email, name, verified, onboarded}` | `401` |
+| `POST /auth/change-password` | `{currentPassword, newPassword}` | `200 {accessToken, user}` — старі токени недійсні | `400 WRONG_PASSWORD`, `400 SAME_PASSWORD`, `400 WEAK_PASSWORD` |
+| `POST /auth/forgot-password` | `{email}` | завжди `200 {sent:true}`; лист з кодом лише якщо пошта є | `429` |
+| `POST /auth/reset-password` | `{email, code, newPassword}` | `200 {accessToken, user}` — старі токени недійсні | `400 CODE_INVALID`, `400 CODE_EXPIRED`, `400 WEAK_PASSWORD`, `429 TOO_MANY_ATTEMPTS` |
+| `PATCH /auth/me` | `{name}` | `200 {id, email, name, verified, onboarded}` | `400 INVALID_NAME` |
+| `DELETE /auth/me` | `{password}` | `200 {deleted:true}` — користувач, анкета, фото (і файли), коди | `400 WRONG_PASSWORD` |
 
 The verification code:
-- has 6 digits
+- has 6 digits and a purpose: `verify` (sign-up) or `reset` (forgotten password) — one can't be used for the other
 - is valid for 10 minutes
 - allows at most 5 attempts
 - is stored only as a hash
@@ -148,7 +153,18 @@ docker compose up --build   # API на http://localhost:3000, Swagger на /api/
 Локально без Docker для API: `docker compose up -d db`, `npx prisma migrate deploy`, `npm run start:dev`.
 Поки `SMTP_USER` у `.env` порожній, код підтвердження не надсилається, а пишеться в консоль API.
 
+## Тести
+Наскрізні (e2e) тести — справжні HTTP-запити до API і окрема база `roomie_test`; листи не надсилаються, коди тести читають напряму.
+```bash
+docker compose up -d db
+docker compose exec db psql -U roomie -c "CREATE DATABASE roomie_test"   # один раз
+export TEST_DATABASE_URL=postgresql://roomie:roomie@localhost:5432/roomie_test
+DATABASE_URL=$TEST_DATABASE_URL npx prisma migrate deploy
+npm run test:e2e
+```
+GitHub Actions запускає їх на кожен PR, який змінює `backend/`.
+
 ## Що вже є
-- **Auth:** `POST /auth/register`, `POST /auth/verify-email`, `POST /auth/resend-code`, `POST /auth/login`, `GET /auth/me`
+- **Auth:** `POST /auth/register`, `POST /auth/verify-email`, `POST /auth/resend-code`, `POST /auth/login`, `GET /auth/me`, `POST /auth/change-password`, `POST /auth/forgot-password`, `POST /auth/reset-password`, `PATCH /auth/me`, `DELETE /auth/me`
 - **Profile:** `GET /profile/me`, `PUT /profile/me` (часткове оновлення; після повної анкети `onboarded = true`), `GET /users/:id`
 - Дозволені пошти: `lpnu.ua`, `edu.lpnu.ua`, `lnu.edu.ua`, `ldufk.edu.ua`, `meduniv.lviv.ua` — список у `src/config/universities.ts`

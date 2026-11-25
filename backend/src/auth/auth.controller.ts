@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Patch, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { User } from '@prisma/client';
@@ -6,10 +6,14 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthService } from './auth.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResendCodeDto } from './dto/resend-code.dto';
-import { ApiErrorDto, AuthResultDto, SentDto, UserDto } from './dto/responses.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ApiErrorDto, AuthResultDto, DeletedDto, SentDto, UserDto } from './dto/responses.dto';
+import { UpdateMeDto } from './dto/update-me.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 
 @ApiTags('auth')
@@ -85,6 +89,65 @@ export class AuthController {
   @ApiResponse({ status: 429, type: ApiErrorDto, description: 'Забагато запитів' })
   changePassword(@CurrentUser() user: User, @Body() dto: ChangePasswordDto) {
     return this.auth.changePassword(user, dto);
+  }
+
+  @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @Post('forgot-password')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Забули пароль — надіслати код',
+    description:
+      'Завжди відповідає `{ sent: true }`, навіть якщо такої пошти немає, — так не можна перевірити, хто зареєстрований. ' +
+      'Якщо пошта є й підтверджена — приходить лист «Відновлення пароля» з 6-значним кодом (не частіше ніж раз на 60 с).',
+  })
+  @ApiResponse({ status: 200, type: SentDto })
+  @ApiResponse({ status: 429, type: ApiErrorDto, description: 'Забагато запитів' })
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.auth.forgotPassword(dto);
+  }
+
+  @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @Post('reset-password')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Новий пароль за кодом з листа',
+    description:
+      'Код діє 10 хвилин, 5 спроб. Після зміни всі старі токени недійсні; у відповіді — новий токен (користувач одразу залогінений).',
+  })
+  @ApiResponse({ status: 200, type: AuthResultDto })
+  @ApiResponse({ status: 400, type: ApiErrorDto, description: 'CODE_INVALID · CODE_EXPIRED · WEAK_PASSWORD' })
+  @ApiResponse({ status: 429, type: ApiErrorDto, description: 'TOO_MANY_ATTEMPTS · забагато запитів' })
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.auth.resetPassword(dto);
+  }
+
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
+  @Patch('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Змінити ім’я' })
+  @ApiResponse({ status: 200, type: UserDto })
+  @ApiResponse({ status: 400, type: ApiErrorDto, description: 'INVALID_NAME' })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'UNAUTHORIZED · TOKEN_INVALID' })
+  updateMe(@CurrentUser() user: User, @Body() dto: UpdateMeDto) {
+    return this.auth.updateMe(user, dto);
+  }
+
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @Delete('me')
+  @HttpCode(200)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Видалити акаунт',
+    description:
+      'Назавжди: користувач, анкета, фото (і файли), коди. Потрібен поточний пароль. Після цього на ту саму пошту можна зареєструватися знову.',
+  })
+  @ApiResponse({ status: 200, type: DeletedDto })
+  @ApiResponse({ status: 400, type: ApiErrorDto, description: 'WRONG_PASSWORD (field: password)' })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'UNAUTHORIZED · TOKEN_INVALID' })
+  deleteMe(@CurrentUser() user: User, @Body() dto: DeleteAccountDto) {
+    return this.auth.deleteAccount(user, dto);
   }
 
   @Get('me')

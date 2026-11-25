@@ -9,6 +9,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: roomie
+          POSTGRES_PASSWORD: roomie
+          POSTGRES_DB: roomie_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U roomie" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://roomie:roomie@localhost:5432/roomie_test?schema=public
     defaults:
       run:
         working-directory: backend
@@ -28,3 +40,9 @@ jobs:
         run: npx prisma generate
       - if: steps.code.outputs.present == 'true'
         run: npm run build
+      - if: steps.code.outputs.present == 'true'
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+      - if: steps.code.outputs.present == 'true'
+        run: npm run test:e2e
