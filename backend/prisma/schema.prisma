@@ -58,12 +58,16 @@ model Photo {
   @@map("photos")
 }
 
+/// One active code per email and purpose: "verify" (sign-up) or "reset" (forgotten password).
+/// A sign-up code can't reset a password and vice versa.
 model EmailCode {
-  email     String   @id
+  email     String
+  purpose   String   @default("verify")
   codeHash  String
   expiresAt DateTime
   attempts  Int      @default(0)
   createdAt DateTime @default(now())
 
+  @@id([email, purpose])
   @@map("email_codes")
 }

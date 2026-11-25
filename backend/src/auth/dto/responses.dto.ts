@@ -22,6 +22,11 @@ export class SentDto {
   sent: true;
 }
 
+export class DeletedDto {
+  @ApiProperty({ example: true })
+  deleted: true;
+}
+
 export class AuthResultDto {
   @ApiProperty({ description: 'JWT. Передавати як `Authorization: Bearer <token>`' })
   accessToken: string;
