@@ -91,6 +91,9 @@ export class AuthService {
   async changePassword(user: User, dto: ChangePasswordDto): Promise<AuthResultDto> {
     const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
     if (!ok) throw new ApiException(400, 'WRONG_PASSWORD', 'Поточний пароль неправильний', 'currentPassword');
+    if (await bcrypt.compare(dto.newPassword, user.passwordHash)) {
+      throw new ApiException(400, 'SAME_PASSWORD', 'Новий пароль має відрізнятися від поточного', 'newPassword');
+    }
 
     const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
     const updated = await this.prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
