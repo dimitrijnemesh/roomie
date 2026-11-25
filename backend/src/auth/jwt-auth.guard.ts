@@ -22,7 +22,7 @@ export class JwtAuthGuard implements CanActivate {
     const [scheme, token] = req.headers.authorization?.split(' ') ?? [];
     if (scheme !== 'Bearer' || !token) throw new ApiException(401, 'UNAUTHORIZED', 'Потрібно увійти');
 
-    let payload: { sub: string };
+    let payload: { sub: string; ver?: number };
     try {
       payload = await this.jwt.verifyAsync(token);
     } catch {
@@ -31,6 +31,10 @@ export class JwtAuthGuard implements CanActivate {
 
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
     if (!user) throw new ApiException(401, 'UNAUTHORIZED', 'Потрібно увійти');
+    // Tokens issued before tokenVersion existed have no `ver` and count as version 0.
+    if ((payload.ver ?? 0) !== user.tokenVersion) {
+      throw new ApiException(401, 'TOKEN_INVALID', 'Сесія закінчилась, увійди знову');
+    }
 
     req.user = user;
     return true;

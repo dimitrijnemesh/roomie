@@ -14,6 +14,8 @@ model User {
   name         String
   verified     Boolean  @default(false)
   onboarded    Boolean  @default(false)
+  /// Bumped on password change; JWTs carry it as `ver`, so older tokens stop working
+  tokenVersion Int      @default(0)
   createdAt    DateTime @default(now())
   profile      Profile?
   photos       Photo[]

@@ -68,8 +68,13 @@ export class AuthController {
   @Post('change-password')
   @HttpCode(200)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Змінити пароль', description: 'Лише для залогінених.' })
-  @ApiResponse({ status: 200, type: AuthResultDto })
+  @ApiOperation({
+    summary: 'Змінити пароль',
+    description:
+      'Лише для залогінених. Після зміни всі старі токени стають недійсними — на інших пристроях користувача викидає з акаунта. ' +
+      'Фронт має зберегти новий `accessToken` з відповіді.',
+  })
+  @ApiResponse({ status: 200, type: AuthResultDto, description: 'Новий токен' })
   @ApiResponse({
     status: 400,
     type: ApiErrorDto,

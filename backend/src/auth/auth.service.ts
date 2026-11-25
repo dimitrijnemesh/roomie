@@ -96,7 +96,14 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
-    const updated = await this.prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+    // Conditional on the version the guard saw, so two parallel changes can't both succeed.
+    const { count } = await this.prisma.user.updateMany({
+      where: { id: user.id, tokenVersion: user.tokenVersion },
+      data: { passwordHash, tokenVersion: { increment: 1 } },
+    });
+    if (count === 0) throw new ApiException(401, 'TOKEN_INVALID', 'Сесія закінчилась, увійди знову');
+
+    const updated = await this.prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     return this.authResult(updated);
   }
 
@@ -126,7 +133,7 @@ export class AuthService {
   }
 
   private async authResult(user: User): Promise<AuthResultDto> {
-    const accessToken = await this.jwt.signAsync({ sub: user.id });
+    const accessToken = await this.jwt.signAsync({ sub: user.id, ver: user.tokenVersion });
     return { accessToken, user: this.toUserDto(user) };
   }
 }
