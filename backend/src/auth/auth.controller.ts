@@ -65,6 +65,7 @@ export class AuthController {
     return this.auth.login(dto);
   }
 
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('change-password')
   @HttpCode(200)
   @ApiBearerAuth()
@@ -81,6 +82,7 @@ export class AuthController {
     description: 'WRONG_PASSWORD (field: currentPassword) · WEAK_PASSWORD · SAME_PASSWORD (field: newPassword)',
   })
   @ApiResponse({ status: 401, type: ApiErrorDto, description: 'UNAUTHORIZED · TOKEN_INVALID' })
+  @ApiResponse({ status: 429, type: ApiErrorDto, description: 'Забагато запитів' })
   changePassword(@CurrentUser() user: User, @Body() dto: ChangePasswordDto) {
     return this.auth.changePassword(user, dto);
   }
