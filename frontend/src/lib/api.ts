@@ -50,6 +50,7 @@ export const authApi = {
   resendCode: (email: string) => request<{ sent: true }>("/auth/resend-code", { method: "POST", body: { email } }),
   login: (body: { email: string; password: string }) => request<AuthResult>("/auth/login", { method: "POST", body }),
   me: () => request<User>("/auth/me", { auth: true }),
+  updateMe: (body: { name: string }) => request<User>("/auth/me", { method: "PATCH", body, auth: true }),
 };
 
 // ---------- Profile / onboarding ----------
