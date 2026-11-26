@@ -51,6 +51,11 @@ export const authApi = {
   login: (body: { email: string; password: string }) => request<AuthResult>("/auth/login", { method: "POST", body }),
   me: () => request<User>("/auth/me", { auth: true }),
   updateMe: (body: { name: string }) => request<User>("/auth/me", { method: "PATCH", body, auth: true }),
+  /** Returns a new token — the old one (and every other device) stops working. */
+  changePassword: (body: { currentPassword: string; newPassword: string }) =>
+    request<AuthResult>("/auth/change-password", { method: "POST", body, auth: true }),
+  deleteAccount: (password: string) =>
+    request<{ deleted: true }>("/auth/me", { method: "DELETE", body: { password }, auth: true }),
 };
 
 // ---------- Profile / onboarding ----------
