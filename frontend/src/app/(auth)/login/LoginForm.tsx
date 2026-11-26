@@ -98,6 +98,9 @@ export function LoginForm() {
           enterKeyHint="go"
           {...form.bind("password")}
         />
+        <Link href="/forgot-password" className="-mt-1 self-end text-sm font-medium text-mint-dark underline-offset-4 hover:underline">
+          Забули пароль?
+        </Link>
         <Button type="submit" loading={loading} className="mt-4 w-full py-3.5 text-lg">
           {loading ? "Входимо…" : "Увійти"}
         </Button>

@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { CODE_LENGTH as LENGTH, CodeInput, emptyCode as empty, noBadBoxes } from "@/components/CodeInput";
 import { Alert, Button, FieldError, SuccessOverlay } from "@/components/ui";
 import { ApiError, authApi } from "@/lib/api";
 import { shake, wait } from "@/lib/motion";
 import { clearPendingEmail, getPendingEmail, setToken } from "@/lib/session";
 
-const LENGTH = 6;
 const RESEND_SECONDS = 60;
-const empty = () => Array<string>(LENGTH).fill("");
 
 export function VerifyForm() {
   const router = useRouter();
@@ -60,33 +59,6 @@ export function VerifyForm() {
   function clearError() {
     setError(undefined);
     setBadBoxes(Array(LENGTH).fill(false));
-  }
-
-  function fill(start: number, text: string) {
-    if (/\D/.test(text)) {
-      showError("Код складається лише з цифр", badBoxes.map((_, j) => j === start));
-      return;
-    }
-    const chars = text.slice(0, LENGTH - start).split("");
-    if (!chars.length) return;
-    clearError();
-    setNotice(undefined);
-    setDigits((prev) => {
-      const next = [...prev];
-      chars.forEach((c, i) => (next[start + i] = c));
-      return next;
-    });
-    inputs.current[Math.min(start + chars.length, LENGTH - 1)]?.focus();
-  }
-
-  function onKeyDown(i: number, e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Backspace" && !digits[i] && i > 0) {
-      inputs.current[i - 1]?.focus();
-    } else if (e.key === "ArrowLeft" && i > 0) {
-      inputs.current[i - 1]?.focus();
-    } else if (e.key === "ArrowRight" && i < LENGTH - 1) {
-      inputs.current[i + 1]?.focus();
-    }
   }
 
   const submit = useCallback(
@@ -168,52 +140,26 @@ export function VerifyForm() {
       )}
 
       <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-6" noValidate>
-        <fieldset aria-describedby={error ? "code-error" : undefined}>
-          <legend className="sr-only">Код підтвердження</legend>
-          <div ref={boxesRef} className="flex justify-between gap-2">
-            {digits.map((d, i) => (
-              <input
-                key={i}
-                ref={(el) => {
-                  inputs.current[i] = el;
-                }}
-                value={d}
-                inputMode="numeric"
-                autoComplete={i === 0 ? "one-time-code" : "off"}
-                maxLength={LENGTH}
-                readOnly={loading}
-                aria-label={`Цифра ${i + 1}`}
-                aria-invalid={badBoxes[i] || undefined}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (v === "") {
-                    setDigits((prev) => prev.map((x, j) => (j === i ? "" : x)));
-                  } else {
-                    // typing over an existing digit gives two chars — keep the new one
-                    const typed = d && v.length === 2 ? (v[0] === d ? v[1] : v[0]) : v;
-                    fill(i, typed);
-                  }
-                }}
-                onKeyDown={(e) => onKeyDown(i, e)}
-                onPaste={(e) => {
-                  e.preventDefault();
-                  fill(i, e.clipboardData.getData("text").replace(/[\s-]/g, ""));
-                }}
-                onFocus={(e) => e.target.select()}
-                className={`h-14 w-full min-w-0 rounded-[14px] border-2 text-center font-display text-2xl font-bold text-ink outline-none transition-colors read-only:opacity-60 sm:h-16 ${
-                  badBoxes[i]
-                    ? "border-warning bg-warning/5 focus:border-warning"
-                    : d
-                      ? "border-mint bg-mint-tint/50 focus:border-mint"
-                      : "border-line bg-white focus:border-mint"
-                }`}
-              />
-            ))}
-          </div>
+        <div>
+          <CodeInput
+            label="Код підтвердження"
+            digits={digits}
+            setDigits={setDigits}
+            bad={badBoxes}
+            readOnly={loading}
+            errorId={error ? "code-error" : undefined}
+            inputs={inputs}
+            boxesRef={boxesRef}
+            onBadChar={(i) => showError("Код складається лише з цифр", noBadBoxes().map((_, j) => j === i))}
+            onTyped={() => {
+              clearError();
+              setNotice(undefined);
+            }}
+          />
           <div className="mt-3">
             <FieldError id="code-error">{error}</FieldError>
           </div>
-        </fieldset>
+        </div>
 
         {notice && <Alert tone="info">{notice}</Alert>}
 
